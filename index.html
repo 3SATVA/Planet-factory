@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Planet Factory</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="hud">
+  <div id="hp"></div>
+  <div id="temp" class="hidden" title="Temperature — stay near your ship or a Lamp"><span>🌡</span><div class="bar"><i></i></div><b></b></div>
+  <div id="goals"></div>
+</div>
+<div id="topbtns">
+  <button id="buildBtn" tabindex="-1">🔨 Build <kbd>B</kbd></button>
+  <button id="helpBtn" tabindex="-1">?</button>
+</div>
+<div id="bagBar">
+  <button id="bagBtn" tabindex="-1" title="Backpack (I / Tab)"><span class="ico">🎒</span><span id="bagCount">0</span></button>
+  <div id="selChip" title="Selected item (Q to drop)"></div>
+</div>
+<div id="inventory" class="panel hidden"></div>
+<div id="box" class="panel hidden"></div>
+<button id="actBtn" class="hidden" tabindex="-1"></button>
+<div id="modeBar" class="hidden"></div>
+<button id="flipBuildBtn" class="hidden" tabindex="-1" title="Flip building (R)">⇆ Flip <kbd>R</kbd></button>
+<div id="buildMenu" class="panel hidden"></div>
+<div id="help" class="panel"></div>
+<div id="toast"></div>
+<div id="saved">Saved ✓</div>
+<div id="touch" class="hidden">
+  <button data-k="left" tabindex="-1">◀</button><button data-k="right" tabindex="-1">▶</button>
+  <button data-k="jump" id="jumpBtn" class="jump" tabindex="-1">▲</button>
+</div>
+<script src="game.js"></script>
+</body>
+</html>
