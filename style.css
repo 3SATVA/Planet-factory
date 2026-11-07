@@ -123,6 +123,8 @@ body.flying #help { display: none; }
 #temp.hot.low b{color:#ff8a5a}
 @keyframes frz{50%{box-shadow:0 0 0 2px #9fd4ff}}
 #box{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:30;width:340px;max-width:calc(100% - 16px);padding:12px}
+#box.shared{border-color:#7a62d688}
+#box.shared .invHead b{color:#d7c6ff}
 #box.hidden{display:none}
 #box .any{font-size:22px;color:#ffd84a}
 #box .boxNote{max-width:330px;line-height:1.4;font-size:13px}
