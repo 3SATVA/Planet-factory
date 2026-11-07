@@ -1,64 +1,130 @@
-# Planet Factory (v6)
+# Planet Factory (v7.5)
 
-2D side-view factory game on small round planets with Mario-Galaxy-style radial gravity.
-Plain HTML + canvas + JS. **No build step**: deploy the repo root as a static site (Vercel zero-config works).
+Canonical source: https://github.com/3SATVA/Planet-factory
 
-Run locally: `python3 -m http.server 8000` then open http://localhost:8000
-- `?fresh=1` ignores the save, `?demo=1` loads a pre-built demo factory (not saved).
+2D side-view factory on small round planets with radial gravity. Plain HTML + canvas + JS. No build step.
 
-## Build menu (v6.3)
-Tabbed panel: **Tier 1** (basics + sorter/unloader) and **Tier 2** (advanced machines + fast logistics). Locked cards stay greyed with a research note.
+`game.js` is the source of truth for costs, recipes, and substitutes. Saves use `localStorage` key `planet-factory-v1` (`SAVE_VER` 3). Loading a save repairs a buried machine using that planet's real radius and does not move buildings that are already above the ground.
 
-## Progression (v6)
-Automate deeper production chains to unlock new buildings through **Research**:
-1. Smelt **Iron** → build an **Assembler** → craft **Gears / Wire / Circuits / Frames**
-2. Build a **Research Lab**, feed it parts (belt or hand) to unlock tiers
-3. **Tier 1 Mechanics** (8 Gears) → Sorter, Unloader
-4. **Tier 2 Electronics** (6 Circuits) → Advanced Drill & Advanced Generator (their recipes also need Circuits/Frames)
-5. **Tier 3 Logistics** (4 Circuits + 4 Frames) → Fast Conveyor, Splitter, Merger
+Run locally:
 
-## Controls
-**On foot:** A/D or ←/→ walk · Space/W jump · Click tree = chop, ground = dig, goop = hit ·
-Click a machine's output cube to pick it up · Click a Chest / Sorter / Unloader / Assembler / Lab to open it · E grab nearby · 🎒 or I/Tab = backpack ·
-Q drop · B build · X remove · Right-click = remove (refund) · Mouse wheel = zoom · H help · Esc cancel.
+```bash
+python3 -m http.server 8799
+```
 
-**Power lines:** click a ⚡ node on a Generator, then another machine's ⚡ node. L is a shortcut.
+Open http://localhost:8799. `?fresh=1` ignores the save. `?demo=1` loads a pre-built demo and does not save.
 
-**Ship:** powered Basic Ship Port → F to board · W/↑ thrust · A/D turn · F to land.
+Checks:
 
-## Ice Moon
-Same as v5: own world state, temperature drain, drills mine stone + cobalt ore. Machines on other planets pause.
+```bash
+node --check game.js
+python3 scripts/test-save-heights.py      # needs the server on port 8799
+python3 scripts/test-recipe-balance.py    # same server
+```
 
-## Assembler recipes
+## Planets
+
+Each planet keeps its own terrain, buildings, and belts. Research, inventory, and goals travel with you. Machines on planets you are not standing on are paused.
+
+| Planet | Renewable by hand | Renewable from a Drill | Smelt |
+|---|---|---|---|
+| Home | Wood (trees), Jelly (goop) | Stone | Stone → Iron |
+| Ice Moon | Wood (pines, plus 1 from each crystal tree), Frost (crystal trees and goop), Jelly | Stone, Cobalt Ore | Stone → Iron, Cobalt Ore → Cobalt |
+| Red Dust | Wood (**debris only**), Magma (rocks), Jelly, rare Ember | Stone, Red Dust Ore | Stone → Iron, Red Dust Ore → Heatsteel |
+
+Digging is finite crust, not a renewable supply:
+
+- Home: Dirt, three layers.
+- Ice Moon: Ice on the surface, then Dirt.
+- Red Dust: Dirt, then Stone, then Red Dust Ore.
+
+A Drill is the renewable Stone (and special ore) source. The first Drill is paid with hand materials: Wood plus Dirt, or Ice or Stone standing in for Dirt. Later Drills, Generators, and Furnaces can keep using Stone once the crust runs out.
+
+Pines regrow on the Ice Moon and are the timber. Crystal trees drop 2 Frost and 1 Wood. Breakable wood debris exists only on Red Dust.
+
+## Substitutes
+
+One-way and 1:1. The game spends the primary first, then the substitute. A refund returns the stack you actually paid, not the catalog name.
+
+| Primary cost | Also accepts | Does not accept |
+|---|---|---|
+| Cobalt | Heatsteel | — |
+| Frost | Magma | — |
+| Dirt | Ice, then Stone | — |
+| Stone | — | Dirt, Ice |
+| Heatsteel (Plating) | — | Cobalt |
+| Iron, Wood, Gears, Circuits, Frames | — | other materials |
+
+Costs that allow a substitute are marked `*` in the build menu. Stone never satisfies a Stone cost, so Iron still starts at a Drill and a Furnace. Heatsteel does not turn into Plating's inputs in reverse: Plating is the Red Dust frame upgrade (2 Heatsteel + 1 Frame → 2 Frames).
+
+Bulk fill is exclusive. A Furnace asks for 5 Stone and 2 Dirt. Those 5 Stone are reserved first, so 6 Stone is not enough to cover both lines. 7 Stone is, or 5 Stone plus 2 Dirt or Ice.
+
+## Research
+
+Global, not per planet. Parts are fed into any Research Lab port.
+
+| Level | Cost | Unlocks |
+|---|---|---|
+| 1 Mechanics | 16 Gears | Sorter, Unloader |
+| 2 Electronics | 12 Circuits | Advanced Drill, Advanced Generator |
+| 3 Logistics | 8 Circuits + 8 Frames | Fast Conveyor, Splitter, Merger |
+| 4 Corvette | 15 Circuits + 15 Gears + 15 Frames | Corvette Port |
+
+Circuits need Wire. Wire is 1 Cobalt or 1 Heatsteel → 2 Wire. Home does not produce either metal, so Levels 2–4 are researched after Ice Moon or Red Dust. Gears and Frames are iron-and-stone parts on every planet.
+
+## Assembler
+
 | Recipe | Inputs | Output |
 |---|---|---|
 | Gear | 2 Iron | 1 Gear |
-| Wire | 1 Cobalt Bar | 2 Wire |
+| Wire | 1 Cobalt or Heatsteel | 2 Wire |
 | Circuit | 1 Gear + 2 Wire | 1 Circuit |
 | Frame | 2 Iron + 1 Stone | 1 Frame |
+| Plating | 2 Heatsteel + 1 Frame | 2 Frames |
+
+The Furnace accepts Stone, Cobalt Ore, and Red Dust Ore only. It does not accept bars or substitutes.
 
 ## Builds
-| Build | Cost | Notes |
+
+| Build | Cost | Where the materials come from |
 |---|---|---|
-| Drill | 4 wood, 4 dirt | uses 2 · cube every 9s |
-| Generator | 3 wood, 3 dirt | makes 6 · 2 lines · ~120px |
-| Conveyor | 2 wood | straight belt on legs |
-| Catwalk | 2 wood | walkway; jump up through |
-| Furnace | 5 stone, 2 dirt | stone→iron, ore→cobalt · **can hang in the air** |
-| Assembler | 6 iron, 4 stone | uses 2 · pick a recipe · 1–2 belt inputs (buffers capped) · **can hang in the air** |
-| Research Lab | 8 iron, 6 stone | uses 2 · unlocks tiers |
-| Chest | 6 wood, 2 stone | holds 60 |
-| Lamp | 2 iron, 2 wood | warm zone |
-| Turret | 4 iron, 2 stone | uses 2 |
-| Sorter ★T1 | 3 iron, 2 frost | picked → ✓, rest → ✕ · **can hang in the air** |
-| Unloader ★T1 | 2 cobalt, 2 iron | next to Chest |
-| Advanced Drill ★T2 | 10 ice, 6 frost, 4 cobalt, **2 circuit** | uses 3 · every 1.5s |
-| Advanced Generator ★T2 | 12 ice, 6 frost, 6 cobalt, **2 circuit, 2 frame** | makes 16 · 6 lines · ~480px |
-| Fast Conveyor ★T3 | 1 iron, 1 gear | 2× belt speed |
-| Splitter ★T3 | 4 iron, 2 gear | alternate two outputs |
-| Merger ★T3 | 4 iron, 2 gear | two inputs → one output |
-| Basic Ship Port | 12 iron, 10 stone, 6 wood, 5 jelly | uses 2 |
+| Drill | 4 Wood, 4 Dirt* | Hand on every planet. Ice or Stone can fill Dirt. |
+| Generator | 3 Wood, 3 Dirt* | Same. 6 power, 2 lines, ~120px. |
+| Conveyor | 2 Wood | Renewable wood on every planet. |
+| Catwalk | 2 Wood | Same. |
+| Furnace | 5 Stone, 2 Dirt* | Stone from a Drill (or a Red Dust dig). |
+| Assembler | 6 Iron, 4 Stone | Iron chain on every planet. |
+| Research Lab | 8 Iron, 6 Stone | Same. |
+| Chest | 6 Wood, 2 Stone | Same. Holds 60. |
+| Lamp / Cooler | 2 Iron, 2 Wood | Warmth or cooling. No power. |
+| Turret | 4 Iron, 2 Stone | Uses 2 power. |
+| Sorter | 3 Iron, 1 Gear | Level 1. Local iron gear, not a crystal. |
+| Unloader | 2 Iron, 2 Gears | Level 1. Sits next to a Chest. |
+| Fast Conveyor | 1 Iron, 1 Gear | Level 3. 2× belt speed. |
+| Splitter / Merger | 4 Iron, 2 Gears | Level 3. |
+| Basic Ship Port | 12 Iron, 10 Stone, 6 Wood, 5 Jelly | Gunship. Jelly comes from goop on every planet. |
+| Advanced Drill | 8 Stone, 6 Frost*, 4 Cobalt*, 2 Circuits | Level 2. Local on Ice Moon and Red Dust. |
+| Advanced Generator | 8 Stone, 6 Frost*, 6 Cobalt*, 2 Circuits, 2 Frames | Level 2. 16 power, 6 lines, ~480px. |
+| Corvette Port | 12 Cobalt*, 12 Frames, 10 Circuits, 20 Iron, 8 Jelly | Level 4. Enters Red Dust's atmosphere. |
 
-★ = gated behind research. Old saves keep existing advanced machines and are granted matching research tiers.
+`*` means the substitute column above. Power lines and power nodes have no material cost.
 
-Original sketch: `docs/sketch.jpg`. Screenshots: `shots/`.
+## What stays an import
+
+These are intentional. They are not required to expand a basic factory.
+
+- **Home, advanced machines and the Corvette.** Frost or Magma, Cobalt or Heatsteel, and Circuits. Home can make the stone, iron, gears, and frames. It cannot make the crystal or the special metal.
+- **Home, research Levels 2–4.** Same Circuit chain.
+- **Ice Moon, Plating and Heatsteel.** Red Dust ore and the reinforced-frame recipe stay on Red Dust. Cobalt does not craft Plating.
+- **Red Dust, raw Cobalt and Frost.** Heatsteel and Magma fill those costs. The bars and crystals themselves are not produced there.
+- **Ice blocks as a special part.** Ice is crust and a Dirt substitute. Advanced machines no longer spend a finite pile of Ice, so a Drill or Generator can be repeated.
+
+Basic belts, splitters, mergers, power, storage, unloaders, drills, furnaces, and assemblers can be rebuilt from renewable local chains on Home, Ice Moon, and Red Dust. The first Drill never requires its own output.
+
+## Controls
+
+**On foot:** A/D or ←/→ walk · Space/W jump · Click a tree, debris, rock, ground, or goop · Click a machine cube to pick it up · Click a Chest, Sorter, Unloader, Assembler, or Lab to open it · E grab · I/Tab backpack · Q drop · B build · R flip while placing · X remove · Right-click remove · Touch: hold ~0.5s to remove · Wheel zoom · H help · Esc cancel.
+
+**Power:** click a ⚡ node, then another node. L starts a link.
+
+**Ship:** powered port → F to board · W/↑ thrust · A/D turn · F to land. Red Dust turns the gunship away; use a Corvette.

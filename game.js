@@ -1,9 +1,9 @@
 'use strict';
-/* Planet Factory — v7. Plain canvas, no build step. */
+/* Planet Factory — v7.5. Plain canvas, no build step. */
 (() => {
 const TAU = Math.PI * 2;
 const R = 340, NSEG = 144, LAYER = 9, LAYERS = 3, ROCK_R = R - LAYER * LAYERS;
-const SAVE_VER = 3; // v7.4: Red Dust wood debris (never rewrite building r0)
+const SAVE_VER = 3; // placement repair stays planet-aware; v7.5 cost changes do not move buildings
 const G = 950, REACH = 175, BUILD_RANGE = 480, LINK_RANGE = 360, BELT_SPEED = 62, MAX_ITEMS = 220;
 const GOOP_SPAWN_MULT = 0.3; // relative spawn rate (both planets); intervals scale by 1/MULT
 const GOOP_SPAWN_INTERVAL = 14 / GOOP_SPAWN_MULT; // was 14s between attempts
@@ -199,9 +199,9 @@ const GRADE = { dirt: 1, ice: 1.15, stone: 1.25, wood: 1, frost: 1.4, coore: 1.6
 const LANE_H = 26, CHEST_CAP = 60, LAMP_R = 200, SHIP_WARM_R = 190, TEMP_DRAIN = 2.2, TEMP_WARM = 30;
 const DEF = {
   drill:     { name: 'Drill', cost: { wood: 4, dirt: 4 }, hw: 20, h: 64, demand: 2, every: 9, desc: 'Needs 2 power. Pops out a stone cube every 9s (stone/cobalt on Ice Moon; Red Dust Ore + stone on Red Dust — split with a Sorter).' },
-  drill2:    { name: 'Advanced Drill', cost: { ice: 10, frost: 6, cobalt: 4, circuit: 2 }, hw: 22, h: 70, demand: 3, every: 1.5, tier: 2, desc: 'Needs Research Level 2 + 3 power. Frosty blue-steel drill: a cube every 1.5s. Frost (or Magma).' },
+  drill2:    { name: 'Advanced Drill', cost: { stone: 8, frost: 6, cobalt: 4, circuit: 2 }, hw: 22, h: 70, demand: 3, every: 1.5, tier: 2, desc: 'Needs Research Level 2 + 3 power. A cube every 1.5s. Stone chassis, Frost (or Magma), Cobalt (or Heatsteel).' },
   generator: { name: 'Generator', cost: { wood: 3, dirt: 3 }, hw: 18, h: 48, supply: 6, slots: 2, range: 120, desc: 'Makes 6 power (machines use 2–3). Only 2 power lines, short reach (~120px). Can hang in the air.' },
-  generator2:{ name: 'Advanced Generator', cost: { ice: 12, frost: 6, cobalt: 6, circuit: 2, frame: 2 }, hw: 22, h: 60, supply: 16, slots: 6, range: 480, tier: 2, desc: 'Needs Research Level 2. Makes 16 power · 6 lines · long reach (~480px). Frost (or Magma). Can hang in the air.' },
+  generator2:{ name: 'Advanced Generator', cost: { stone: 8, frost: 6, cobalt: 6, circuit: 2, frame: 2 }, hw: 22, h: 60, supply: 16, slots: 6, range: 480, tier: 2, desc: 'Needs Research Level 2. Makes 16 power · 6 lines · long reach (~480px). Stone chassis, Frost (or Magma), Cobalt (or Heatsteel). Can hang in the air.' },
   catwalk:   { name: 'Catwalk', cost: { wood: 2 }, desc: 'Click a start and an end: a straight walkway on legs. Jump up through it from below and stand on top.' },
   conveyor:  { name: 'Conveyor', cost: { wood: 2 }, desc: 'Click a start and an end: a straight belt between them. Ends snap to machine ports, or hang in the air on legs.' },
   conveyor2: { name: 'Fast Conveyor', cost: { iron: 1, gear: 1 }, tier: 3, desc: 'Needs Research Level 3. Same placement as a Conveyor, but moves items 2× as fast.' },
@@ -212,8 +212,8 @@ const DEF = {
   chest:     { name: 'Chest', cost: { wood: 6, stone: 2 }, hw: 18, h: 34, desc: 'Holds 60 items. Feed it with a conveyor or drop items on it. Click to open. Can hang in the air.' },
   lamp:      { name: 'Lamp', cost: { iron: 2, wood: 2 }, hw: 10, h: 80, desc: 'No power needed. Keeps you warm on cold planets. Can hang in the air.' },
   cooler:    { name: 'Cooler', cost: { iron: 2, wood: 2 }, hw: 12, h: 70, desc: 'No power needed. Keeps you cool on hot Red Dust. Can hang in the air.' },
-  filter:    { name: 'Sorter', cost: { iron: 3, frost: 2 }, hw: 18, h: 66, tier: 1, desc: 'Needs Research Level 1. Belt in on the back (⇨). Picked item → low ✓; rest → high ✕. Frost (or Magma). Can hang in the air.' },
-  unloader:  { name: 'Unloader', cost: { cobalt: 2, iron: 2 }, hw: 14, h: 36, tier: 1, desc: 'Needs Research Level 1. Place next to a Chest. Pops items out onto a conveyor. Can hang in the air.' },
+  filter:    { name: 'Sorter', cost: { iron: 3, gear: 1 }, hw: 18, h: 66, tier: 1, desc: 'Needs Research Level 1. Belt in on the back (⇨). Picked item → low ✓; rest → high ✕. Iron and gears — local on every planet. Can hang in the air.' },
+  unloader:  { name: 'Unloader', cost: { iron: 2, gear: 2 }, hw: 14, h: 36, tier: 1, desc: 'Needs Research Level 1. Place next to a Chest. Pops items out onto a conveyor. Iron and gears — local on every planet. Can hang in the air.' },
   splitter:  { name: 'Splitter', cost: { iron: 4, gear: 2 }, hw: 18, h: 66, tier: 3, desc: 'Needs Research Level 3. Belt in on the back; items alternate between the two output ports. Can hang in the air.' },
   merger:    { name: 'Merger', cost: { iron: 4, gear: 2 }, hw: 18, h: 66, tier: 3, desc: 'Needs Research Level 3. Two input ports merge onto one output belt. Can hang in the air.' },
   shipport:  { name: 'Basic Ship Port', cost: { iron: 12, stone: 10, wood: 6, jelly: 5 }, hw: 42, h: 174, demand: 2, desc: 'Builds a gunship. Power the pad, click it or press F to board and fly!' },
@@ -245,8 +245,52 @@ const RECIPES = {
   plating: { name: 'Plating', in: { heatsteel: 2, frame: 1 }, out: 'frame', n: 2, time: 4, desc: '2 Heatsteel + 1 Frame → 2 reinforced Frames' },
 };
 const RECIPE_ORDER = ['gear', 'wire', 'circuit', 'frame', 'plating'];
-// alts fill primary slots 1:1 (assembler buf, build costs, research store)
-const ALT_FOR = { heatsteel: 'cobalt', magma: 'frost' };
+// One-way, 1:1. The alt fills the primary slot and never the reverse.
+// heatsteel→cobalt, magma→frost: special metal / special crystal.
+// ice→dirt, stone→dirt: bulk fill so a finite crust cannot cap drills, generators, or furnaces.
+// Stone does not satisfy a Stone cost — the iron chain still needs real stone.
+const ALT_FOR = { heatsteel: 'cobalt', magma: 'frost', ice: 'dirt', stone: 'dirt' };
+// Buildings placed before `paid` was stored refund this catalog, not today's costs.
+const LEGACY_COST = {
+  filter: { iron: 3, frost: 2 },
+  unloader: { cobalt: 2, iron: 2 },
+  drill2: { ice: 10, frost: 6, cobalt: 4, circuit: 2 },
+  generator2: { ice: 12, frost: 6, cobalt: 6, circuit: 2, frame: 2 },
+};
+function altTypes(primary) {
+  const out = [];
+  for (const [alt, prim] of Object.entries(ALT_FOR)) if (prim === primary) out.push(alt);
+  return out;
+}
+// Reserve every primary first, then fill deficits from that line's alts.
+// A stack that is also another line's primary (stone vs dirt) is not counted twice.
+function planCost(cost, have) {
+  const pool = {};
+  const touch = (t) => { if (pool[t] == null) pool[t] = Math.max(0, Math.floor(+have(t) || 0)); };
+  const spent = {}, need = {};
+  for (const [k, v] of Object.entries(cost || {})) {
+    const qty = Math.max(0, Math.floor(+v || 0));
+    touch(k);
+    const take = Math.min(pool[k], qty);
+    pool[k] -= take;
+    if (take) spent[k] = (spent[k] || 0) + take;
+    if (qty > take) need[k] = qty - take;
+  }
+  const short = {};
+  for (const [k, left0] of Object.entries(need)) {
+    let left = left0;
+    for (const alt of altTypes(k)) {
+      touch(alt);
+      const take = Math.min(pool[alt], left);
+      pool[alt] -= take;
+      if (take) spent[alt] = (spent[alt] || 0) + take;
+      left -= take;
+      if (left <= 0) break;
+    }
+    if (left > 0) short[k] = left;
+  }
+  return { ok: Object.keys(short).length === 0, spent, short };
+}
 const ASSEM_IN = [[-30, -10], [-30, -10 - LANE_H]]; // primary (unchanged) + optional upper input
 const BUF_CRAFTS = 2; // buffer cap = recipe need × this (per ingredient)
 function assemblerPorts(b) { return ASSEM_IN.map(p => flipP(b, p)); }
@@ -261,12 +305,12 @@ function bufCap(r, type) {
   return (r.in[slot] || 0) * BUF_CRAFTS;
 }
 function bufCount(b, slot) {
-  let n = b.buf[slot] || 0;
-  for (const [alt, primary] of Object.entries(ALT_FOR)) if (primary === slot) n += b.buf[alt] || 0;
+  let n = (b.buf && b.buf[slot]) || 0;
+  for (const alt of altTypes(slot)) n += (b.buf && b.buf[alt]) || 0;
   return n;
 }
 function recipeNeedLabel(k) {
-  const alts = Object.entries(ALT_FOR).filter(([, prim]) => prim === k).map(([alt]) => INAME[alt]);
+  const alts = altTypes(k).map(a => INAME[a]);
   return alts.length ? `${INAME[k]} or ${alts.join('/')}` : INAME[k];
 }
 // horizontal flip (±1). placeFlip remembered across placements; b.flip saved on each building
@@ -427,6 +471,7 @@ function newWorld(id) {
       s.bushes.push({ a: top + i * (TAU / 16) + rand(-.06, .06), s: rand(.85, 1.4), kind: 'dust', hp: 2, regrow: 0, shake: 0 });
     }
     for (let i = 0; i < 4; i++) { const g = newGoop(top + Math.PI + (i - 1.5) * .7); g.hp = 5; s.goops.push(g); }
+    seedDustDebris(s); // wreckage is here on first landing; still Red Dust only
     return s;
   }
   [-1.15, -.75, -.42, .45, .9, 1.55, 2.25, 2.95, 3.65, 4.35, 5.05].forEach(o => s.trees.push({ a: top + o, hp: 3, regrow: 0, shake: 0, size: rand(.85, 1.15) }));
@@ -712,33 +757,27 @@ function chordClear(x1, y1, x2, y2) {
 }
 function invCount(slot) {
   let n = S.inv[slot] || 0;
-  for (const [alt, primary] of Object.entries(ALT_FOR)) if (primary === slot) n += S.inv[alt] || 0;
+  for (const alt of altTypes(slot)) n += S.inv[alt] || 0;
   return n;
 }
-function canAfford(cost) { return Object.entries(cost).every(([k, v]) => invCount(k) >= v); }
+function canAfford(cost) { return planCost(cost, t => S.inv[t] || 0).ok; }
 function pay(cost, sign = -1) {
-  // sign < 0: spend (alts OK), returns exact {item:n} taken
-  // sign > 0: refund that map as-is (magma/heatsteel come back if spent)
+  // sign > 0: refund that map as-is (the materials actually spent)
   if (sign >= 0) {
     for (const [k, v] of Object.entries(cost || {})) S.inv[k] = (S.inv[k] || 0) + sign * v;
     uiDirty = true;
     return cost || {};
   }
-  const spent = {};
-  for (const [k, v] of Object.entries(cost || {})) {
-    let left = v;
-    const take = (type) => {
-      const have = S.inv[type] || 0, use = Math.min(have, left);
-      if (use) { S.inv[type] = have - use; spent[type] = (spent[type] || 0) + use; left -= use; }
-    };
-    take(k);
-    for (const [alt, primary] of Object.entries(ALT_FOR)) if (primary === k) take(alt);
-  }
+  const plan = planCost(cost, t => S.inv[t] || 0);
+  if (!plan.ok) return null; // never take a partial payment
+  for (const [k, v] of Object.entries(plan.spent)) S.inv[k] = Math.max(0, (S.inv[k] || 0) - v);
   uiDirty = true;
-  return spent;
+  return plan.spent;
 }
 function refundOf(obj, fallback) {
-  return (obj && obj.paid && typeof obj.paid === 'object') ? obj.paid : fallback;
+  if (obj && obj.paid && typeof obj.paid === 'object') return obj.paid;
+  if (obj && obj.type && LEGACY_COST[obj.type]) return LEGACY_COST[obj.type];
+  return fallback;
 }
 function goal(k) {
   const map = goalsMap(), list = goalsList();
@@ -750,32 +789,29 @@ function tierLabel(n) { return TIERS[n] ? `Level ${n}: ${TIERS[n].name}` : ''; }
 function needCost(need) { return Object.entries(need).map(([k, n]) => `${n} ${recipeNeedLabel(k)}`).join(' + '); }
 function storeCount(st, slot) {
   let n = st[slot] || 0;
-  for (const [alt, primary] of Object.entries(ALT_FOR)) if (primary === slot) n += st[alt] || 0;
+  for (const alt of altTypes(slot)) n += st[alt] || 0;
   return n;
 }
-function storeHas(st, need) { return Object.entries(need).every(([k, n]) => storeCount(st, k) >= n); }
-function storeTake(st, need) {
-  for (const [k, n] of Object.entries(need)) {
-    let left = n;
-    const take = (type) => {
-      const have = st[type] || 0, use = Math.min(have, left);
-      if (use) { st[type] = have - use; if (st[type] <= 0) delete st[type]; left -= use; }
-    };
-    take(k);
-    for (const [alt, primary] of Object.entries(ALT_FOR)) if (primary === k) take(alt);
+function applySpent(bag, spent) {
+  for (const [k, v] of Object.entries(spent)) {
+    bag[k] = (bag[k] || 0) - v;
+    if (bag[k] <= 0) delete bag[k];
   }
 }
-function bufHas(b, need) { return Object.entries(need).every(([k, n]) => bufCount(b, k) >= n); }
+function storeHas(st, need) { return planCost(need, t => st[t] || 0).ok; }
+function storeTake(st, need) {
+  const plan = planCost(need, t => st[t] || 0);
+  if (!plan.ok) return false;
+  applySpent(st, plan.spent);
+  return true;
+}
+function bufHas(b, need) { return planCost(need, t => (b.buf && b.buf[t]) || 0).ok; }
 function bufTake(b, need) {
-  for (const [k, n] of Object.entries(need)) {
-    let left = n;
-    const take = (type) => {
-      const have = b.buf[type] || 0, use = Math.min(have, left);
-      if (use) { b.buf[type] = have - use; if (b.buf[type] <= 0) delete b.buf[type]; left -= use; }
-    };
-    take(k);
-    for (const [alt, primary] of Object.entries(ALT_FOR)) if (primary === k) take(alt);
-  }
+  b.buf = b.buf || {};
+  const plan = planCost(need, t => b.buf[t] || 0);
+  if (!plan.ok) return false;
+  applySpent(b.buf, plan.spent);
+  return true;
 }
 function tryResearch(lab) {
   if (!lab.powered) return;
@@ -1332,7 +1368,10 @@ function primary() {
     const r = surfR(t.a);
     if (t.hp <= 0) {
       t.regrow = 50;
-      if (cold() && t.kind !== 'pine') gain('frost', 2, ...toWorld(t.a, r, 0, -50)); else gain('wood', 3, ...toWorld(t.a, r, 0, -50));
+      if (cold() && t.kind !== 'pine') {
+        gain('frost', 2, ...toWorld(t.a, r, 0, -50));
+        gain('wood', 1, ...toWorld(t.a, r, 0, -34)); // kindling; pines are still the timber
+      } else gain('wood', 3, ...toWorld(t.a, r, 0, -50));
       puff(...toWorld(t.a, r, 0, -40), cold() && t.kind !== 'pine' ? '#bdeaff' : '#2f8f46', 10);
       goal('chop');
     }
@@ -1415,7 +1454,7 @@ function info(b) {
     const next = [1, 2, 3, 4].find(n => !hasTier(n));
     if (!next) return 'Research Lab — all levels unlocked · click to view';
     const st = b.store || {};
-    const parts = Object.entries(TIERS[next].need).map(([k, n]) => `${INAME[k]} ${Math.min(st[k] || 0, n)}/${n}`);
+    const parts = Object.entries(TIERS[next].need).map(([k, n]) => `${recipeNeedLabel(k)} ${Math.min(storeCount(st, k), n)}/${n}`);
     return `Research Lab — ${parts.join(' · ')} · Feed any port`;
   }
   if (b.type === 'chest') return `Chest — ${chestTotal(b)}/${CHEST_CAP} items · click to open`;
@@ -2503,8 +2542,9 @@ const $ = id => document.getElementById(id);
 const toastEl = $('toast'); let toastT = 0;
 function toast(msg) { toastEl.textContent = msg; toastEl.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => toastEl.classList.remove('show'), 2200); }
 function costChips(cost) {
+  const plan = planCost(cost, t => S.inv[t] || 0);
   return '<div class="cost">' + Object.entries(cost).map(([k, v]) =>
-    `<span class="chip ${S.inv[k] < v ? 'bad' : ''}"><i style="${matChipStyle(k)}"></i>${v} ${INAME[k]}</span>`).join('') + '</div>';
+    `<span class="chip${plan.short[k] ? ' bad' : ''}${altTypes(k).length ? ' alt' : ''}" title="${v} ${recipeNeedLabel(k)}"><i style="${matChipStyle(k)}"></i>${v} ${INAME[k]}</span>`).join('') + '</div>';
 }
 function renderUI() {
   $('hp').innerHTML = Array.from({ length: 10 }, (_, i) => `<span class="h ${i < S.player.hp ? '' : 'off'}"></span>`).join('');
@@ -2556,7 +2596,7 @@ function renderBox() {
       const t = TIERS[n], done = hasTier(n);
       const show = !done && n === next;
       const prog = show ? Object.entries(t.need).map(([k, need]) => {
-        const have = Math.min(st[k] || 0, need);
+        const have = Math.min(storeCount(st, k), need);
         return `<div class="rprog needed"><span>${cubeHTML(k)} ${have}/${need} ${INAME[k]}</span><i style="width:${have / need * 100}%"></i></div>`;
       }).join('') : '';
       const body = done ? '<div class="muted">Unlocked</div>' : (show ? prog : '<div class="muted">Locked — finish prior levels first</div>');
@@ -2593,14 +2633,15 @@ function toggleInv(force) {
 }
 const previews = {};
 function miniCost(cost) {
+  const plan = planCost(cost, t => S.inv[t] || 0);
   return '<div class="cost">' + Object.entries(cost).map(([k, v]) =>
-    `<span class="chip ${invCount(k) < v ? 'bad' : ''}" title="${v} ${recipeNeedLabel(k)}"><i style="${matChipStyle(k)}"></i>${v}</span>`).join('') + '</div>';
+    `<span class="chip${plan.short[k] ? ' bad' : ''}${altTypes(k).length ? ' alt' : ''}" title="${v} ${recipeNeedLabel(k)}"><i style="${matChipStyle(k)}"></i>${v}</span>`).join('') + '</div>';
 }
 function buildCard(t) {
   const lock = !unlocked(t), afford = canAfford(DEF[t].cost), d = DEF[t];
   const power = d.demand ? `<span class="pwr">⚡${d.demand}</span>` : d.supply ? `<span class="pwr">+${d.supply}</span>` : '';
   const note = lock ? `<div class="need">needs L${d.tier}</div>` : miniCost(d.cost);
-  return `<button class="card ${lock ? 'locked' : afford ? '' : 'no'}" data-t="${t}" tabindex="-1" title="${lock ? 'Locked — ' + tierLabel(d.tier) : d.name + ' — ' + d.desc}">
+  return `<button class="card ${lock ? 'locked' : afford ? '' : 'no'}" data-t="${t}" tabindex="-1" title="${lock ? 'Locked — ' + tierLabel(d.tier) : d.name + ' — ' + needCost(d.cost) + '. ' + d.desc}">
     <span class="ico"><canvas width="96" height="96" data-p="${t}"></canvas></span>
     <div class="meta"><div class="t">${lock ? '🔒 ' : ''}${d.name}${power}</div>${note}</div>
   </button>`;
@@ -2710,7 +2751,8 @@ function renderHelp() {
   $('help').innerHTML = `<b>Controls</b><br>
   <b>A/D</b> or ←/→ walk · <b>Space/W</b> jump<br>
   <b>Click</b> tree = chop · Red Dust rock = Magma · ground = dig · goop = hit (loot goes to your backpack)<br>
-  <b>Magma</b> substitutes for Frost Crystal · <b>Heatsteel</b> substitutes for Cobalt<br>
+  <b>Magma</b> fills Frost · <b>Heatsteel</b> fills Cobalt · <b>Ice or Stone</b> fills Dirt (*). Stone costs still need Stone. Refunds return what you spent.<br>
+  ❄ Pines are timber; crystal trees drop Frost and a little Wood. 🔥 Wood debris is Red Dust only.<br>
   <b>Click</b> a Chest / Sorter / Assembler / Lab to open it<br>
   <b>Research Lab:</b> Feed Gear / Circuit / Frame into any of the four ports<br>
   <b>Click</b> a machine's cube to pick it up · <b>E</b> grab nearby<br>
@@ -2996,7 +3038,7 @@ function init() {
   if (loadedFromSave) setTimeout(() => toast('💾 Welcome back! Your progress was loaded.'), 400);
   else if (!DEMO) setTimeout(() => toast('Welcome! Chop trees and dig dirt to build a Drill.'), 400);
   // test hooks
-  window.PF = { get S() { return S; }, DEF, RECIPES, TIERS, PLANETS, unlocked, hasTier, shipKind, shipStats, hot, cold, goalsList, goalsMap, GRADE, HOLD_MS, LAB_IN, LAB_PARTS, labPorts, ALT_FOR, slotOf, bufCount, recipeNeedLabel, invCount, canAfford, pay, AIR_BUILD, bushAt, debrisAt, paintMat, ensureMatIcons, MAT_URL, ITEMS, ICOL, INAME, removeAt, deletableAt, get hold() { return hold; }, get placeFlip() { return placeFlip; }, set placeFlip(v) { placeFlip = v === -1 ? -1 : 1; updateFlipBtn(); }, facing, flipP, outOf, inOf, nodeOf, togglePlaceFlip, step: n => { for (let i = 0; i < n; i++) step(1 / 60); }, primaryAt: (wx, wy) => { const [sx, sy] = worldToScreen(wx, wy); mouse.x = sx; mouse.y = sy; primary(); }, setMode, render, toast, save, load,
+  window.PF = { get S() { return S; }, DEF, RECIPES, TIERS, PLANETS, unlocked, hasTier, shipKind, shipStats, hot, cold, goalsList, goalsMap, GRADE, HOLD_MS, LAB_IN, LAB_PARTS, labPorts, ALT_FOR, LEGACY_COST, SMELT, slotOf, bufCount, bufHas, bufTake, recipeNeedLabel, invCount, canAfford, pay, planCost, altTypes, refundOf, deliver, assemblerPorts, AIR_BUILD, bushAt, debrisAt, paintMat, ensureMatIcons, MAT_URL, ITEMS, ICOL, INAME, removeAt, deletableAt, get hold() { return hold; }, get placeFlip() { return placeFlip; }, set placeFlip(v) { placeFlip = v === -1 ? -1 : 1; updateFlipBtn(); }, facing, flipP, outOf, inOf, nodeOf, togglePlaceFlip, step: n => { for (let i = 0; i < n; i++) step(1 / 60); }, primaryAt: (wx, wy) => { const [sx, sy] = worldToScreen(wx, wy); mouse.x = sx; mouse.y = sy; primary(); }, setMode, render, toast, save, load,
     api: { belt: (x1, y1, x2, y2) => { setMode({ kind: 'conveyor' }); conveyorClick(x1, y1); conveyorClick(x2, y2); setMode(null); }, catwalk: (x1, y1, x2, y2) => { setMode({ kind: 'catwalk' }); catwalkClick(x1, y1); catwalkClick(x2, y2); setMode(null); }, belt2: (x1, y1, x2, y2) => { setMode({ kind: 'conveyor2' }); conveyorClick(x1, y1); conveyorClick(x2, y2); setMode(null); }, setResearch: (n, v=true) => { S.research[n] = !!v; uiDirty = true; }, linkClick: (a, b) => { setMode({ kind: 'link' }); linkClick(...bWorld(a, nodeOf(a))); linkClick(...bWorld(b, nodeOf(b))); setMode(null); }, switchPlanet, openBox, closeBox, chestAdd, chestTotal, isWarm, die, tryPlace: (t, wx, wy) => { setMode({ kind: 'build', type: t }); tryPlace(wx, wy); }, placeBuilding, dockShip, tryBoard, tryLand, toggleInv, toggleBuild, keys, touch, bWorld, NODE, mouse, worldToScreen, cam, goal, setUiDirty: () => { uiDirty = true; } } };
   requestAnimationFrame(t => { last = t; requestAnimationFrame(loop); });
 }

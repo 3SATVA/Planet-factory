@@ -81,6 +81,7 @@ kbd{font-size:11px;background:#ffffff22;border-radius:4px;padding:0 4px;margin-l
 .chip{font-size:11px;padding:1px 6px;border-radius:999px;background:#ffffff14;display:flex;align-items:center;gap:4px}
 .chip i{width:9px;height:9px;border-radius:2px;display:inline-block;background-size:cover!important;flex:none}
 .chip.bad{background:#ff5a6e33;color:#ffb3bd}
+.chip.alt::after{content:'*';font-size:8px;opacity:.75;margin-left:1px}
 #help{position:fixed;left:12px;bottom:12px;padding:10px 12px;font-size:12.5px;line-height:1.55;max-width:300px}
 #help b{color:#ffd84a}
 #help button{margin-top:6px;background:#2a1d2a;border:1px solid #ff5a6e55;border-radius:8px;padding:3px 8px;font-size:11px}
