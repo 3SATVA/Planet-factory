@@ -196,7 +196,7 @@ function matChipStyle(k) {
 }
 const SMELT = { stone: 'iron', coore: 'cobalt', rdust: 'heatsteel' };
 const GRADE = { dirt: 1, ice: 1.15, stone: 1.25, wood: 1, frost: 1.4, coore: 1.6, rdust: 2.2, ember: 2.8, magma: 1.2 };
-const LANE_H = 26, CHEST_CAP = 60, LAMP_R = 200, SHIP_WARM_R = 190, TEMP_DRAIN = 2.2, TEMP_WARM = 30;
+const LANE_H = 26, CHEST_CAP = 60, ENDER_CAP = 120, LAMP_R = 200, SHIP_WARM_R = 190, TEMP_DRAIN = 2.2, TEMP_WARM = 30;
 const DEF = {
   drill:     { name: 'Drill', cost: { wood: 4, dirt: 4 }, hw: 20, h: 64, demand: 2, every: 9, desc: 'Needs 2 power. Pops out a stone cube every 9s (stone/cobalt on Ice Moon; Red Dust Ore + stone on Red Dust — split with a Sorter).' },
   drill2:    { name: 'Advanced Drill', cost: { stone: 8, frost: 6, cobalt: 4, circuit: 2 }, hw: 22, h: 70, demand: 3, every: 1.5, tier: 2, desc: 'Needs Research Level 2 + 3 power. A cube every 1.5s. Stone chassis, Frost (or Magma), Cobalt (or Heatsteel).' },
@@ -210,19 +210,20 @@ const DEF = {
   lab:       { name: 'Research Lab', cost: { iron: 8, stone: 6 }, hw: 30, h: 72, demand: 2, desc: 'Needs power. Four input ports — feed Gear / Circuit / Frame by belt into any of them, or hand-deposit. Click to see progress.' },
   turret:    { name: 'Turret', cost: { iron: 4, stone: 2 }, hw: 24, h: 58, demand: 2, desc: 'Needs power. Shoots goop; jelly pops out its side. Can hang in the air.' },
   chest:     { name: 'Chest', cost: { wood: 6, stone: 2 }, hw: 18, h: 34, desc: 'Holds 60 items. Feed it with a conveyor or drop items on it. Click to open. Can hang in the air.' },
+  ender:     { name: 'Teleport Chest', cost: { iron: 4, gear: 2, stone: 2 }, hw: 18, h: 36, tier: 1, desc: 'Needs Research Level 1. No power. One shared vault of 120 items on every planet — belts and Unloaders can fill or empty it. Removing the chest refunds the building only. Can hang in the air.' },
   lamp:      { name: 'Lamp', cost: { iron: 2, wood: 2 }, hw: 10, h: 80, desc: 'No power needed. Keeps you warm on cold planets. Can hang in the air.' },
   cooler:    { name: 'Cooler', cost: { iron: 2, wood: 2 }, hw: 12, h: 70, desc: 'No power needed. Keeps you cool on hot Red Dust. Can hang in the air.' },
   filter:    { name: 'Sorter', cost: { iron: 3, gear: 1 }, hw: 18, h: 66, tier: 1, desc: 'Needs Research Level 1. Belt in on the back (⇨). Picked item → low ✓; rest → high ✕. Iron and gears — local on every planet. Can hang in the air.' },
-  unloader:  { name: 'Unloader', cost: { iron: 2, gear: 2 }, hw: 14, h: 36, tier: 1, desc: 'Needs Research Level 1. Place next to a Chest. Pops items out onto a conveyor. Iron and gears — local on every planet. Can hang in the air.' },
+  unloader:  { name: 'Unloader', cost: { iron: 2, gear: 2 }, hw: 14, h: 36, tier: 1, desc: 'Needs Research Level 1. Place next to a Chest or Teleport Chest. Pops items out onto a conveyor. Iron and gears — local on every planet. Can hang in the air.' },
   splitter:  { name: 'Splitter', cost: { iron: 4, gear: 2 }, hw: 18, h: 66, tier: 3, desc: 'Needs Research Level 3. Belt in on the back; items alternate between the two output ports. Can hang in the air.' },
   merger:    { name: 'Merger', cost: { iron: 4, gear: 2 }, hw: 18, h: 66, tier: 3, desc: 'Needs Research Level 3. Two input ports merge onto one output belt. Can hang in the air.' },
   shipport:  { name: 'Basic Ship Port', cost: { iron: 12, stone: 10, wood: 6, jelly: 5 }, hw: 42, h: 174, demand: 2, desc: 'Builds a gunship. Power the pad, click it or press F to board and fly!' },
   corvetteport: { name: 'Corvette Port', cost: { cobalt: 12, frame: 12, circuit: 10, iron: 20, jelly: 8 }, hw: 52, h: 200, demand: 3, tier: 4, desc: 'Needs Research Level 4. Builds a Corvette that can enter Red Dust\'s thick atmosphere.' },
 };
-const BUILD_ORDER = ['drill', 'generator', 'conveyor', 'furnace', 'assembler', 'lab', 'chest', 'lamp', 'cooler', 'turret', 'catwalk', 'filter', 'unloader', 'drill2', 'generator2', 'conveyor2', 'splitter', 'merger', 'shipport', 'corvetteport'];
+const BUILD_ORDER = ['drill', 'generator', 'conveyor', 'furnace', 'assembler', 'lab', 'chest', 'ender', 'lamp', 'cooler', 'turret', 'catwalk', 'filter', 'unloader', 'drill2', 'generator2', 'conveyor2', 'splitter', 'merger', 'shipport', 'corvetteport'];
 const PORT_TYPES = new Set(['shipport', 'corvetteport']);
-const BOXES = ['chest', 'filter', 'unloader', 'assembler', 'lab'];
-const AIR_BUILD = new Set(['furnace', 'filter', 'assembler', 'lab', 'splitter', 'merger', 'unloader', 'chest', 'lamp', 'cooler', 'turret', 'generator', 'generator2']); // drills/ports stay grounded
+const BOXES = ['chest', 'ender', 'filter', 'unloader', 'assembler', 'lab'];
+const AIR_BUILD = new Set(['furnace', 'filter', 'assembler', 'lab', 'splitter', 'merger', 'unloader', 'chest', 'ender', 'lamp', 'cooler', 'turret', 'generator', 'generator2']); // drills/ports stay grounded
 const MAX_AIR_H = 200;
 const NODE = { drill: [-8, -60], drill2: [-10, -66], generator: [8, -44], generator2: [0, -56], furnace: [16, -62], assembler: [0, -58], lab: [0, -64], turret: [-26, -52], shipport: [-46, -72], corvetteport: [-52, -80] };
 const OUT = { drill: [26, -8], drill2: [28, -8], furnace: [30, -8], assembler: [30, -10], turret: [28, -7], merger: [24, -8] };
@@ -340,7 +341,7 @@ function updateFlipBtn() {
 }
 // build menu tabs (Tier 1 = basics + T1 research; Tier 2 = advanced / late unlocks)
 const BUILD_TABS = {
-  1: ['drill', 'generator', 'furnace', 'assembler', 'lab', 'conveyor', 'catwalk', 'chest', 'lamp', 'cooler', 'turret', 'shipport', 'filter', 'unloader'],
+  1: ['drill', 'generator', 'furnace', 'assembler', 'lab', 'conveyor', 'catwalk', 'chest', 'ender', 'lamp', 'cooler', 'turret', 'shipport', 'filter', 'unloader'],
   2: ['drill2', 'generator2', 'conveyor2', 'splitter', 'merger', 'corvetteport'],
 };
 let buildTab = 1;
@@ -351,7 +352,7 @@ function setBuildTab(n) {
   renderBuildMenu();
 }
 const TIERS = {
-  1: { name: 'Mechanics', need: { gear: 16 }, unlocks: 'Sorter · Unloader' },
+  1: { name: 'Mechanics', need: { gear: 16 }, unlocks: 'Sorter · Unloader · Teleport Chest' },
   2: { name: 'Electronics', need: { circuit: 12 }, unlocks: 'Advanced Drill · Advanced Generator' },
   3: { name: 'Logistics', need: { circuit: 8, frame: 8 }, unlocks: 'Fast Conveyor · Splitter · Merger' },
   4: { name: 'Corvette', need: { circuit: 15, gear: 15, frame: 15 }, unlocks: 'Corvette Port' },
@@ -451,6 +452,9 @@ function circ(x, y, r, fill, stroke = OUTLINE, lw = 2) {
 const qs = new URLSearchParams(location.search);
 const DEMO = qs.has('demo');
 let S, bullets = [], fx = [], mode = null, hover = null, hold = null;
+// Factory sim target. Null means the planet the player is on (fields live on S).
+// A visited world is simulated in place — never copied onto S, never measured with the active planet's radius.
+let SIM = null, SIM_ID = null;
 const keys = {}, touch = { left: false, right: false, jump: false };
 const mouse = { x: 0, y: 0, in: false };
 const cam = { x: 0, y: -R - 90, rot: 0, zoom: 1, userZoom: 1 };
@@ -484,6 +488,7 @@ function newState() {
     v: SAVE_VER, t: 0, planet: 'home', worlds: {}, ...newWorld('home'),
     nextId: 1, player: { x: 0, y: -R, vx: 0, vy: 0, hp: 10, inv: 0, facing: 1, anim: 0, swing: 0, cool: 0, ground: true, regen: 0, temp: 100, freeze: 0, warm: true },
     inv: Object.fromEntries(ITEMS.map(k => [k, 0])), selType: 'wood', goals: {}, research: { 1: false, 2: false, 3: false, 4: false }, dustGoals: {}, ship: null, flying: false,
+    ender: {}, // one player-wide teleport vault; never copied into a world
   };
 }
 let lastSavedShown = -1e9, saveFails = 0;
@@ -498,7 +503,7 @@ function showSaved(force) {
 function save(manual) {
   if (DEMO || !S) return false;
   try {
-    localStorage.setItem(SAVE_KEY, JSON.stringify(S, (k, v) => (k === 'net' ? undefined : v))); // net is runtime-only (circular)
+    localStorage.setItem(SAVE_KEY, JSON.stringify(S, (k, v) => (k === 'net' || k === 'bullets' ? undefined : v))); // net/bullets are runtime-only
     saveFails = 0; showSaved(!!manual); return true;
   } catch (e) {
     console.warn('Planet Factory: save failed', e);
@@ -561,6 +566,7 @@ function sanitizeWorld(st, planetId) {
     }
     if (b.type === 'furnace') b.q = Array.isArray(b.q) ? b.q.filter(t => SMELT[t]) : [];
     if (b.type === 'chest' || b.type === 'lab') { const o = isObj(b.store) ? b.store : {}; b.store = {}; for (const k of ITEMS) if (+o[k] > 0) b.store[k] = Math.floor(+o[k]); }
+    if (b.type === 'ender') delete b.store; // vault is S.ender, once, not per building
     if (b.type === 'assembler') {
       const o = isObj(b.buf) ? b.buf : {}; b.buf = {}; for (const k of ITEMS) if (+o[k] > 0) b.buf[k] = Math.floor(+o[k]);
       if (!RECIPES[b.pick]) b.pick = 'gear';
@@ -598,6 +604,7 @@ function sanitizeWorld(st, planetId) {
     for (const it of st.items) if (it.belt === c.id) { const k = Math.min(n - 1, Math.floor((+it.bt || 0) * n)); it.belt = ids[k]; it.bt = Math.min(1, (+it.bt || 0) * n - k); }
   }
   st.conveyors = out; st.nextId = Math.max(st.nextId || 1, nid);
+  delete st.bullets; delete st.planetId; // runtime sim fields must not ride along in a world blob
   return st;
 }
 function seedPines(w) {
@@ -690,7 +697,8 @@ function sanitize(st) {
   const owned = new Set(all.flatMap(w => w.buildings.map(b => b.type)));
   if (all.flatMap(w => w.conveyors).some(c => (c.spd || 1) > 1) || owned.has('splitter') || owned.has('merger')) st.research[3] = true;
   if (owned.has('drill2') || owned.has('generator2')) st.research[2] = true;
-  if (owned.has('filter') || owned.has('unloader') || st.research[2] || st.research[3]) st.research[1] = true;
+  if (owned.has('filter') || owned.has('unloader') || owned.has('ender') || st.research[2] || st.research[3]) st.research[1] = true;
+  st.ender = normalizeEnder(st.ender);
   if (owned.has('corvetteport')) st.research[4] = true;
   const s = st.ship;
   if (!isObj(s) || ![s.x, s.y].every(n => typeof n === 'number' && isFinite(n))) st.ship = null;
@@ -724,10 +732,11 @@ function load() {
 
 // ---------- entities ----------
 function spawnItem(type, x, y, vx = 0, vy = 0) {
-  S.items.push({ type, x, y, vx, vy, belt: null, ign: 0, ignT: 0, rot: rand(-.3, .3) });
-  if (S.items.length > MAX_ITEMS) {
-    const i = S.items.findIndex(it => !it.belt);
-    if (i >= 0) S.items.splice(i, 1);
+  const items = simState().items;
+  items.push({ type, x, y, vx, vy, belt: null, ign: 0, ignT: 0, rot: rand(-.3, .3) });
+  if (items.length > MAX_ITEMS) {
+    const i = items.findIndex(it => !it.belt);
+    if (i >= 0) items.splice(i, 1);
   }
 }
 const upv = a => [Math.cos(a), Math.sin(a)];
@@ -845,35 +854,71 @@ function switchPlanet(id) {
   for (const f of fx) { f.x -= ox; f.y -= oy; }
   bullets = []; closeBox(); setMode(null); uiDirty = true;
 }
-function chestTotal(b) { let n = 0; for (const k in b.store || {}) n += b.store[k]; return n; }
+function simState() { return SIM || S; }
+function simPlanetId() { return SIM ? SIM_ID : (S && S.planet); }
+function simPR() { const id = simPlanetId(); return (PLANETS[id] && PLANETS[id].r) || R; }
+function simSurf(a) { const dug = (simState() && simState().dug) || []; return simPR() - (dug[segOf(a)] || 0) * LAYER; }
+function simHot() { return !!(PLANETS[simPlanetId()] && PLANETS[simPlanetId()].hot); }
+function simCold() { return !!(PLANETS[simPlanetId()] && PLANETS[simPlanetId()].cold); }
+function bulletArr() { return SIM ? (SIM.bullets || (SIM.bullets = [])) : bullets; }
+function isSharedChest(b) { return !!(b && b.type === 'ender'); }
+function normalizeEnder(raw) {
+  const bag = {};
+  if (!isObj(raw)) return bag;
+  for (const k of ITEMS) { const n = Math.floor(+raw[k] || 0); if (n > 0) bag[k] = n; }
+  let total = 0; for (const k of ITEMS) total += bag[k] || 0;
+  // corrupt over-cap saves trim from the end of ITEMS; normal play never exceeds the cap
+  if (total > ENDER_CAP) {
+    let over = total - ENDER_CAP;
+    for (let i = ITEMS.length - 1; i >= 0 && over > 0; i--) {
+      const k = ITEMS[i], n = bag[k] || 0; if (!n) continue;
+      const cut = Math.min(n, over); bag[k] = n - cut; if (bag[k] <= 0) delete bag[k]; over -= cut;
+    }
+  }
+  return bag;
+}
+function ensureEnder() {
+  if (!isObj(S.ender)) S.ender = {};
+  return S.ender;
+}
+function bagOf(b) { return isSharedChest(b) ? ensureEnder() : (b.store || {}); }
+function chestCapOf(b) { return isSharedChest(b) ? ENDER_CAP : CHEST_CAP; }
+function chestTotal(b) { const st = bagOf(b); let n = 0; for (const k in st) n += st[k]; return n; }
+function markBox(b) { if (b === boxB || (isSharedChest(b) && boxB && isSharedChest(boxB))) uiDirty = true; }
 function chestAdd(b, type) {
-  b.store = b.store || {};
-  if (chestTotal(b) >= CHEST_CAP) return false;
-  b.store[type] = (b.store[type] || 0) + 1;
-  if (b === boxB) uiDirty = true;
+  const shared = isSharedChest(b);
+  const st = shared ? ensureEnder() : (b.store = b.store || {});
+  if (chestTotal(b) >= chestCapOf(b)) return false;
+  if (!ITEMS.includes(type)) return false;
+  st[type] = (st[type] || 0) + 1;
+  markBox(b);
   return true;
 }
 function chestTake(b, pick) {
-  const st = b.store || {}, k = pick ? (st[pick] > 0 ? pick : null) : ITEMS.find(t => st[t] > 0);
+  const st = isSharedChest(b) ? ensureEnder() : (b.store || {});
+  const k = pick ? (st[pick] > 0 ? pick : null) : ITEMS.find(t => st[t] > 0);
   if (!k) return null;
   if (--st[k] <= 0) delete st[k];
-  if (b === boxB) uiDirty = true;
+  markBox(b);
   return k;
 }
 function nearestChest(b, maxD) {
   let best = null, bd = maxD;
-  for (const c of S.buildings) if (c.type === 'chest') { const d = Math.abs(angDiff(b.a, c.a)) * R; if (d < bd) { bd = d; best = c; } }
+  for (const c of simState().buildings) if (c.type === 'chest' || c.type === 'ender') {
+    const d = Math.abs(angDiff(b.a, c.a)) * R; // same arc test the active planet already uses (constant R, not the other planet's radius)
+    if (d < bd) { bd = d; best = c; }
+  }
   return best;
 }
 // a building receives an item arriving at (x, y): 'take' | 'block' | 'moved' | 'no'
 function deliver(it, x, y, rad) {
-  for (const b of S.buildings) {
+  for (const b of simState().buildings) {
     if (b.type === 'furnace') {
       if (dist(x, y, ...bWorld(b, inOf(b))) >= rad) continue;
       if (!SMELT[it.type]) return 'no';
       if ((b.q = b.q || []).length < 8) { b.q.push(it.type); return 'take'; }
       return 'block';
-    } else if (b.type === 'chest') {
+    } else if (b.type === 'chest' || b.type === 'ender') {
       if (dist(x, y, ...bWorld(b, [0, -14])) >= rad + 10) continue;
       return chestAdd(b, it.type) ? 'take' : 'block';
     } else if (b.type === 'assembler') {
@@ -920,7 +965,7 @@ function deliver(it, x, y, rad) {
 function splitItem(b, it) {
   b.alt = (b.alt || 0) ^ 1; const lane = b.alt; const c = sorterBelt(b, lane);
   if (c) {
-    if (S.items.some(o => o.belt === c.id && o.bt * convLen(c) < 15)) { b.alt ^= 1; return 'block'; }
+    if (simState().items.some(o => o.belt === c.id && o.bt * convLen(c) < 15)) { b.alt ^= 1; return 'block'; }
     it.belt = c.id; it.bt = 0; [it.x, it.y] = convPoint(c, 0);
   } else {
     const d = facing(b), t = tanv(b.a), u = upv(b.a);
@@ -932,9 +977,9 @@ function splitItem(b, it) {
 }
 function mergeItem(b, it) {
   const [ox, oy] = outOf(b);
-  const c = S.conveyors.find(o => dist(o.x1, o.y1, ox, oy) < 13);
+  const c = simState().conveyors.find(o => dist(o.x1, o.y1, ox, oy) < 13);
   if (c) {
-    if (S.items.some(o => o.belt === c.id && o.bt * convLen(c) < 15)) return 'block';
+    if (simState().items.some(o => o.belt === c.id && o.bt * convLen(c) < 15)) return 'block';
     it.belt = c.id; it.bt = 0; [it.x, it.y] = convPoint(c, 0);
   } else {
     const d = facing(b), t = tanv(b.a), u = upv(b.a);
@@ -948,12 +993,12 @@ function mergeItem(b, it) {
 function sorterPort(b, lane) { return [facing(b) * 24, -8 - lane * LANE_H]; }
 function sorterBelt(b, lane) {
   const [px, py] = bWorld(b, sorterPort(b, lane));
-  return S.conveyors.find(c => dist(c.x1, c.y1, px, py) < 13);
+  return simState().conveyors.find(c => dist(c.x1, c.y1, px, py) < 13);
 }
 function sortItem(b, it) {
   const lane = b.pick && it.type === b.pick ? 0 : 1, c = sorterBelt(b, lane);
   if (c) {
-    if (S.items.some(o => o.belt === c.id && o.bt * convLen(c) < 15)) return 'block';
+    if (simState().items.some(o => o.belt === c.id && o.bt * convLen(c) < 15)) return 'block';
     it.belt = c.id; it.bt = 0; [it.x, it.y] = convPoint(c, 0);
   } else {
     // nothing attached: pop out of the port onto the ground (like a Drill)
@@ -984,11 +1029,12 @@ function puff(x, y, color, n = 6) { for (let i = 0; i < n; i++) fx.push({ k: 'p'
 
 // ---------- power ----------
 function computePower() {
+  const world = simState();
   const par = {}; const find = i => par[i] === i ? i : (par[i] = find(par[i]));
-  S.buildings.forEach(b => par[b.id] = b.id);
-  S.links.forEach(([a, b]) => { if (par[a] !== undefined && par[b] !== undefined) par[find(a)] = find(b); });
+  world.buildings.forEach(b => par[b.id] = b.id);
+  world.links.forEach(([a, b]) => { if (par[a] !== undefined && par[b] !== undefined) par[find(a)] = find(b); });
   const nets = {};
-  S.buildings.forEach(b => { const r = find(b.id); (nets[r] = nets[r] || { supply: 0, demand: 0, list: [] }).list.push(b); });
+  world.buildings.forEach(b => { const r = find(b.id); (nets[r] = nets[r] || { supply: 0, demand: 0, list: [] }).list.push(b); });
   for (const n of Object.values(nets)) {
     n.list.forEach(b => { n.supply += DEF[b.type].supply || 0; });
     let left = n.supply;
@@ -1004,26 +1050,50 @@ function computePower() {
 }
 
 // ---------- update ----------
-function update(dt) {
-  S.t += dt;
-  computePower();
-  if (!S.flying) updatePlayer(dt); else S.player.temp = Math.min(100, S.player.temp + TEMP_WARM * dt);
-  updateShip(dt);
-  updateBuildings(dt);
-  updateConveyors(dt);
-  updateItems(dt);
-  updateGoops(dt);
-  updateBullets(dt);
-  S.trees.forEach(t => { t.shake = Math.max(0, t.shake - dt); if (t.hp <= 0 && (t.regrow -= dt) <= 0) { t.hp = 3; } });
-  S.bushes.forEach(b => {
+function regrowWorld(dt) {
+  const w = simState();
+  (w.trees || []).forEach(t => { t.shake = Math.max(0, t.shake - dt); if (t.hp <= 0 && (t.regrow -= dt) <= 0) { t.hp = 3; } });
+  (w.bushes || []).forEach(b => {
     if (b.kind !== 'dust') return;
     b.shake = Math.max(0, (b.shake || 0) - dt);
     if (b.hp <= 0 && ((b.regrow = (b.regrow || 0) - dt), b.regrow <= 0)) b.hp = 2;
   });
-  (S.debris || []).forEach(d => {
+  (w.debris || []).forEach(d => {
     d.shake = Math.max(0, (d.shake || 0) - dt);
     if (d.hp <= 0 && ((d.regrow = (d.regrow || 0) - dt), d.regrow <= 0)) d.hp = DEBRIS_HP;
   });
+}
+// One factory pass. remote worlds are not the planet under the camera: no player, no new goops, no fx.
+function simulateFactory(dt, remote) {
+  computePower();
+  updateBuildings(dt);
+  updateConveyors(dt);
+  updateItems(dt);
+  if (!remote) { updateGoops(dt); updateBullets(dt); } // goops and shots stay on the planet you are watching
+  regrowWorld(dt);
+}
+function worldWorthSim(w) {
+  return !!w && (((w.items && w.items.length) || (w.buildings && w.buildings.length)));
+}
+// Visited planets only (entries already in S.worlds). Same dt as this frame — no wall-clock catch-up when the page is hidden.
+// Active planet already ran. Other planets then run in id order so a shared-vault pull is deterministic.
+// Goops on an unattended planet stay put and do not spawn, so they cannot stack up or hand the player loot.
+function simulateAway(dt) {
+  const ids = Object.keys(S.worlds || {}).filter(id => PLANETS[id] && id !== S.planet).sort();
+  for (const id of ids) {
+    const w = S.worlds[id];
+    if (!worldWorthSim(w)) continue;
+    SIM = w; SIM_ID = id;
+    try { simulateFactory(dt, true); }
+    finally { SIM = null; SIM_ID = null; }
+  }
+}
+function update(dt) {
+  S.t += dt;
+  if (!S.flying) updatePlayer(dt); else S.player.temp = Math.min(100, S.player.temp + TEMP_WARM * dt);
+  updateShip(dt); // may switch planet before factories tick, so each world is simulated once
+  simulateFactory(dt, false);
+  simulateAway(dt);
   for (let i = fx.length - 1; i >= 0; i--) {
     const f = fx[i]; f.t += dt;
     if (f.k === 'p') { f.x += f.vx * dt; f.y += f.vy * dt; if (f.t > f.life) fx.splice(i, 1); }
@@ -1100,14 +1170,14 @@ function updatePlayer(dt) {
 }
 
 function updateBuildings(dt) {
-  for (const b of S.buildings) {
+  for (const b of simState().buildings) {
     if (b.powered && b.type !== 'unloader') b.anim = (b.anim || 0) + dt;
     if ((b.type === 'drill' || b.type === 'drill2') && b.powered) {
       b.timer = (b.timer || 0) + dt;
       // lock ore for this cycle so slower grades (rdust/coore) aren't starved by re-rolls
       if (!b.nextOre) {
-        b.nextOre = hot() ? (Math.random() < .35 ? 'stone' : 'rdust')
-          : (cold() && Math.random() < .4 ? 'coore' : 'stone');
+        b.nextOre = simHot() ? (Math.random() < .35 ? 'stone' : 'rdust')
+          : (simCold() && Math.random() < .4 ? 'coore' : 'stone');
       }
       const ore = b.nextOre;
       const every = DEF[b.type].every * (GRADE[ore] || 1);
@@ -1146,7 +1216,7 @@ function updateBuildings(dt) {
       if (ch && b.timer >= 1.2) {
         b.timer = 0;
         const d = facing(b), [ox, oy] = bWorld(b, [d * 22, -8]);
-        if (S.items.filter(it => !it.belt && dist(it.x, it.y, ox, oy) < 18).length < 2) {
+        if (simState().items.filter(it => !it.belt && dist(it.x, it.y, ox, oy) < 18).length < 2) {
           const type = chestTake(ch, b.pick);
           if (type) { popItem(type, b.a, b.r0, d * 22, -10, 30, d * 70); b.anim = .3; }
         }
@@ -1157,7 +1227,8 @@ function updateBuildings(dt) {
       if (!b.powered) continue;
       const [px, py] = bWorld(b, [0, -26]);
       let best = null, bd = 330;
-      for (const g of S.goops) {
+      if (SIM) continue; // unattended planets do not farm goops
+      for (const g of simState().goops) {
         if (Math.abs(angDiff(b.a, g.a)) > 1.0) continue;
         const [gx, gy] = goopPos(g), d = dist(px, py, gx, gy);
         if (d < bd) { bd = d; best = [gx, gy]; }
@@ -1167,7 +1238,7 @@ function updateBuildings(dt) {
         b.aim = (b.aim ?? want) + angDiff(b.aim ?? want, want) * Math.min(1, dt * 10);
         if (b.cd <= 0 && Math.abs(angDiff(b.aim, want)) < .2) {
           b.cd = .7;
-          bullets.push({ x: px + Math.cos(b.aim) * 24, y: py + Math.sin(b.aim) * 24, vx: Math.cos(b.aim) * 540, vy: Math.sin(b.aim) * 540, life: .8, from: b.id });
+          bulletArr().push({ x: px + Math.cos(b.aim) * 24, y: py + Math.sin(b.aim) * 24, vx: Math.cos(b.aim) * 540, vy: Math.sin(b.aim) * 540, life: .8, from: b.id });
         }
       }
     }
@@ -1175,17 +1246,18 @@ function updateBuildings(dt) {
 }
 
 function updateConveyors(dt) {
-  for (const c of S.conveyors) {
+  const world = simState();
+  for (const c of world.conveyors) {
     const len = Math.max(1, convLen(c)), gap = 15 / len;
-    const on = S.items.filter(it => it.belt === c.id).sort((a, b) => b.bt - a.bt);
+    const on = world.items.filter(it => it.belt === c.id).sort((a, b) => b.bt - a.bt);
     let ahead = Infinity;
     for (const it of on) {
       let nt = Math.min(it.bt + BELT_SPEED * (c.spd || 1) * dt / len, ahead - gap, 1);
       it.bt = Math.max(it.bt, nt);
       if (it.bt >= 1) {
         const [ex, ey] = convPoint(c, 1);
-        const nx = S.conveyors.find(o => o !== c && dist(o.x1, o.y1, ex, ey) < 12);
-        if (nx) { if (!S.items.some(o => o.belt === nx.id && o.bt * convLen(nx) < 15)) { it.belt = nx.id; it.bt = 0; [it.x, it.y] = convPoint(nx, 0); } }
+        const nx = world.conveyors.find(o => o !== c && dist(o.x1, o.y1, ex, ey) < 12);
+        if (nx) { if (!world.items.some(o => o.belt === nx.id && o.bt * convLen(nx) < 15)) { it.belt = nx.id; it.bt = 0; [it.x, it.y] = convPoint(nx, 0); } }
         else {
           const r = deliver(it, ex, ey, 34);
           if (r === 'take') it.dead = true;
@@ -1196,7 +1268,7 @@ function updateConveyors(dt) {
       else if (it.dead || !it.belt) ahead = Infinity;
     }
   }
-  S.items = S.items.filter(it => !it.dead);
+  world.items = world.items.filter(it => !it.dead);
 }
 function releaseItem(it, c) {
   const L = convLen(c) || 1, tx = (c.x2 - c.x1) / L, ty = (c.y2 - c.y1) / L, u = upv(Math.atan2(it.y, it.x));
@@ -1205,16 +1277,17 @@ function releaseItem(it, c) {
 }
 
 function updateItems(dt) {
-  for (const it of S.items) {
+  const world = simState();
+  for (const it of world.items) {
     if (it.belt) {
-      if (!S.conveyors.some(c => c.id === it.belt)) it.belt = null; else continue;
+      if (!world.conveyors.some(c => c.id === it.belt)) it.belt = null; else continue;
     }
     it.ignT = Math.max(0, it.ignT - dt);
     const r0 = Math.hypot(it.x, it.y) || 1, ux = it.x / r0, uy = it.y / r0;
     let vt = it.vx * -uy + it.vy * ux, vr = it.vx * ux + it.vy * uy;
     vr -= G * dt;
     it.x += it.vx * dt; it.y += it.vy * dt;
-    const a = Math.atan2(it.y, it.x), r = Math.hypot(it.x, it.y), gr = surfR(a) + 6;
+    const a = Math.atan2(it.y, it.x), r = Math.hypot(it.x, it.y), gr = simSurf(a) + 6;
     if (r <= gr) {
       it.x = Math.cos(a) * gr; it.y = Math.sin(a) * gr;
       vr = Math.max(0, -vr * .2); if (vr < 20) vr = 0;
@@ -1223,7 +1296,7 @@ function updateItems(dt) {
     const nu = upv(a), nt = tanv(a);
     it.vx = nt[0] * vt + nu[0] * vr; it.vy = nt[1] * vt + nu[1] * vr;
     // conveyor capture
-    for (const c of S.conveyors) {
+    for (const c of world.conveyors) {
       if (it.ignT > 0 && it.ign === c.id) continue;
       const [t, pd] = convProj(c, it.x, it.y);
       if (t < -.03 || t > 1 || pd > 11 || vr > 40) continue;
@@ -1232,7 +1305,7 @@ function updateItems(dt) {
     // furnaces, chests and sorters catch loose items dropped into them
     if (!it.belt && deliver(it, it.x, it.y, 18) === 'take') it.dead = true;
   }
-  S.items = S.items.filter(it => !it.dead);
+  world.items = world.items.filter(it => !it.dead);
 }
 
 function updateGoops(dt) {
@@ -1458,10 +1531,11 @@ function info(b) {
     return `Research Lab — ${parts.join(' · ')} · Feed any port`;
   }
   if (b.type === 'chest') return `Chest — ${chestTotal(b)}/${CHEST_CAP} items · click to open`;
+  if (b.type === 'ender') return `Teleport Chest — ${chestTotal(b)}/${ENDER_CAP} shared · no power · click to open`;
   if (b.type === 'lamp') return 'Lamp — keeps you warm nearby';
   if (b.type === 'cooler') return 'Cooler — keeps you cool nearby';
   if (b.type === 'filter') return `Sorter — ${b.pick ? INAME[b.pick] + ' → low ✓ port, rest → high ✕ port' : 'nothing picked: all → high ✕ port'} · click to set`;
-  if (b.type === 'unloader') return `Unloader — ${b.src ? 'pulling ' + (b.pick ? INAME[b.pick] : 'any item') : 'place next to a Chest'} · click to set`;
+  if (b.type === 'unloader') return `Unloader — ${b.src ? 'pulling ' + (b.pick ? INAME[b.pick] : 'any item') : 'place next to a Chest or Teleport Chest'} · click to set`;
   if (b.type === 'splitter') return 'Splitter — items alternate between the two output ports';
   if (b.type === 'merger') return 'Merger — two inputs join into one output';
   return s;
@@ -1493,6 +1567,7 @@ function placeBuilding(type, a, r0, flip) {
   const b = { id: S.nextId++, type, a, r0: rr, anim: 0, timer: 0, flip: fl };
   if (type === 'furnace') b.q = [];
   if (type === 'chest' || type === 'lab') b.store = {};
+  // ender has no private store — the vault is S.ender
   if (type === 'assembler') { b.buf = {}; b.pick = 'gear'; }
   if (type === 'filter' || type === 'unloader') b.pick = null;
   if (type === 'filter' || type === 'splitter' || type === 'merger' || type === 'unloader') b.dir = fl;
@@ -1529,7 +1604,7 @@ function portList(b, which) {
   if (t === 'filter' || t === 'splitter') return [[-d * 24, -8]];
   if (t === 'merger') return [[-d * 24, -8], [-d * 24, -8 - LANE_H]];
   if (IN[t]) return [inOf(b)];
-  return t === 'chest' ? sides : [];
+  return (t === 'chest' || t === 'ender') ? sides : [];
 }
 // snap a click onto the nearest building port (outputs for a belt start, inputs for its end)
 function snapPoint(x, y, which) {
@@ -1647,11 +1722,11 @@ function removeAt(mx, my) {
     S.links = S.links.filter(([p, q]) => p !== b.id && q !== b.id);
     pay(refundOf(b, DEF[b.type].cost), 1);
     if (b.q) b.q.forEach(t => { S.inv[t] = (S.inv[t] || 0) + 1; });
-    if (b.store) for (const k in b.store) S.inv[k] = (S.inv[k] || 0) + b.store[k];
+    if (b.type !== 'ender' && b.store) for (const k in b.store) S.inv[k] = (S.inv[k] || 0) + b.store[k];
     if (b === boxB) closeBox();
     if (PORT_TYPES.has(b.type) && S.ship && S.ship.port === b.id) { const s = S.ship, st = shipStats(), r = surfR(b.a) + st.half; s.port = null; s.x = Math.cos(b.a) * r; s.y = Math.sin(b.a) * r; s.ang = b.a; }
     puff(...toWorld(b.a, b.r0, 0, -15), '#ffffff', 10); saveSoon();
-    return toast(DEF[b.type].name + ' removed (refunded)');
+    return toast(b.type === 'ender' ? 'Teleport Chest removed — vault kept, building refunded' : DEF[b.type].name + ' removed (refunded)');
   }
   const cw = catwalkAt(mx, my);
   if (cw) { S.catwalks.splice(S.catwalks.indexOf(cw), 1); pay(refundOf(cw, DEF.catwalk.cost), 1); saveSoon(); return toast('Catwalk removed (refunded)'); }
@@ -2101,6 +2176,17 @@ function drawBuildingLocal(type, b) {
     rr(-4, -24, 8, 9, 2, '#ffd84a', OUTLINE, 1.5);
     const tot = b.store ? chestTotal(b) : 0;
     if (b.id) { rr(-14, -7, 28, 4, 1, '#3b2a1a', null); if (tot) rr(-14, -7, 28 * tot / CHEST_CAP, 4, 1, tot >= CHEST_CAP ? '#ff5a6e' : '#7cf07c', null); }
+  } else if (type === 'ender') {
+    rr(-18, -34, 36, 34, 4, '#3c2d6e');
+    rr(-18, -34, 36, 11, 3, '#7a62d6');
+    ctx.beginPath(); ctx.ellipse(0, -16, 7, 9, 0, 0, TAU);
+    ctx.fillStyle = '#140c28'; ctx.fill(); ctx.strokeStyle = '#7fe3ff'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.beginPath(); ctx.ellipse(0, -16, 3.2, 5, 0, 0, TAU);
+    ctx.fillStyle = '#e4d4ff'; ctx.fill();
+    ctx.strokeStyle = '#c9b6ff'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(-5, -16); ctx.lineTo(5, -16); ctx.moveTo(0, -21); ctx.lineTo(0, -11); ctx.stroke();
+    const et = b.type === 'ender' ? chestTotal(b) : 0;
+    if (b.id) { rr(-14, -6, 28, 4, 1, '#140c28', null); if (et) rr(-14, -6, 28 * Math.min(1, et / ENDER_CAP), 4, 1, et >= ENDER_CAP ? '#ff5a6e' : '#7fe3ff', null); }
   } else if (type === 'filter') {
     const d = facing(b), lit = b.flash > 0 ? b.last : -1;
     ctx.save(); ctx.scale(d, 1);
@@ -2566,17 +2652,20 @@ function renderUI() {
 }
 let boxB = null;
 function openBox(b) { boxB = b; toggleInv(false); toggleBuild(false); setMode(null); $('box').classList.remove('hidden'); renderBox(); }
-function closeBox() { boxB = null; const el = $('box'); if (el) el.classList.add('hidden'); }
+function closeBox() { boxB = null; const el = $('box'); if (el) { el.classList.add('hidden'); el.classList.remove('shared'); } }
 function renderBox() {
   const b = boxB, el = $('box'); if (!b) return;
   const head = (t, extra) => `<div class="invHead"><b>${t}</b><span class="muted">${extra}</span><button id="boxClose" tabindex="-1">✕</button></div>`;
-  if (b.type === 'chest') {
-    const st = b.store || {}, have = ITEMS.filter(k => st[k] > 0), sel = S.selType, tot = chestTotal(b);
+  el.classList.toggle('shared', b.type === 'ender');
+  if (b.type === 'chest' || b.type === 'ender') {
+    const shared = b.type === 'ender', cap = chestCapOf(b);
+    const st = bagOf(b), have = ITEMS.filter(k => st[k] > 0), sel = S.selType, tot = chestTotal(b);
     const slots = have.map(k => `<div class="islot" data-take="${k}" title="Take all ${INAME[k]}">${cubeHTML(k)}<span class="n">${st[k]}</span><span class="nm">${INAME[k]}</span></div>`);
     while (slots.length < INV_SLOTS) slots.push('<div class="islot empty"></div>');
-    el.innerHTML = head('📦 CHEST', `${tot}/${CHEST_CAP}`) + `<div class="grid">${slots.join('')}</div>
-      <div class="invFoot"><span class="muted">Click an item to take it all</span>
-      <button id="putBtn" tabindex="-1" ${S.inv[sel] > 0 && tot < CHEST_CAP ? '' : 'disabled'}>Put ${INAME[sel]} ×${S.inv[sel] || 0}</button></div>`;
+    const note = shared ? 'One vault on every planet · no power · removing a chest keeps it' : 'Click an item to take it all';
+    el.innerHTML = head(shared ? '✦ TELEPORT' : '📦 CHEST', `${tot}/${cap}${shared ? ' shared' : ''}`) + `<div class="grid">${slots.join('')}</div>
+      <div class="invFoot"><span class="muted">${note}</span>
+      <button id="putBtn" tabindex="-1" ${S.inv[sel] > 0 && tot < cap ? '' : 'disabled'}>Put ${INAME[sel]} ×${S.inv[sel] || 0}</button></div>`;
   } else if (b.type === 'assembler') {
     const slots = RECIPE_ORDER.map(k => {
       const r = RECIPES[k];
@@ -2612,7 +2701,7 @@ function renderBox() {
     const slots = opts.map(k => `<div class="islot ${(b.pick || '') === k ? 'sel' : ''}" data-pick="${k}">${k ? cubeHTML(k) : '<span class="any">✱</span>'}<span class="nm">${k ? INAME[k] : isF ? 'Off' : 'Any'}</span></div>`);
     const note = isF
       ? `${b.pick ? `<b>${INAME[b.pick]}</b> → low ✓ port · everything else → high ✕ port.` : 'Nothing picked: everything goes out the high ✕ port.'} Feed it from the back (⇨). Start belts from either port; with no belt, items pop out onto the ground.<br><button id="flipBtn" tabindex="-1">⇄ Flip sides</button>`
-      : (b.src ? `Pulling <b>${b.pick ? INAME[b.pick] : 'any item'}</b> out of the Chest next to it, onto the side with the arrow.` : '<span style="color:#ff8a9a">Place it right next to a Chest.</span>');
+      : (b.src ? `Pulling <b>${b.pick ? INAME[b.pick] : 'any item'}</b> out of the Chest or Teleport Chest next to it, onto the side with the arrow.` : '<span style="color:#ff8a9a">Place it right next to a Chest or Teleport Chest.</span>');
     el.innerHTML = head(isF ? '🔀 SORTER' : '📤 UNLOADER', 'pick an item') + `<div class="grid">${slots.join('')}</div><div class="invFoot boxNote">${note}</div>`;
   }
 }
@@ -2753,7 +2842,9 @@ function renderHelp() {
   <b>Click</b> tree = chop · Red Dust rock = Magma · ground = dig · goop = hit (loot goes to your backpack)<br>
   <b>Magma</b> fills Frost · <b>Heatsteel</b> fills Cobalt · <b>Ice or Stone</b> fills Dirt (*). Stone costs still need Stone. Refunds return what you spent.<br>
   ❄ Pines are timber; crystal trees drop Frost and a little Wood. 🔥 Wood debris is Red Dust only.<br>
-  <b>Click</b> a Chest / Sorter / Assembler / Lab to open it<br>
+  <b>Teleport Chest</b> (Level 1 · 4 Iron + 2 Gears + 2 Stone · no power): one shared vault of 120 on every planet. Belts and Unloaders use it. Removing it refunds the building only.<br>
+  Factories on planets you have visited keep running while you are elsewhere or flying — real power, belts, and buffers. Goops pause and do not spawn there, so they cannot pile up or pay you. Closing the page does not produce.<br>
+  <b>Click</b> a Chest / Teleport Chest / Sorter / Assembler / Lab to open it<br>
   <b>Research Lab:</b> Feed Gear / Circuit / Frame into any of the four ports<br>
   <b>Click</b> a machine's cube to pick it up · <b>E</b> grab nearby<br>
   <b>I</b>/<b>Tab</b> backpack · <b>Q</b> drop selected item<br>
@@ -2920,7 +3011,10 @@ function bindInput() {
     const b = boxB; if (!b) return;
     if (e.target.closest('#boxClose')) return closeBox();
     const tk = e.target.closest('[data-take]');
-    if (tk && b.store) { const k = tk.dataset.take, n = b.store[k] || 0; if (n) { S.inv[k] += n; delete b.store[k]; S.selType = k; toast(`Took ${n} ${INAME[k]}`); } }
+    if (tk) {
+      const st = isSharedChest(b) ? ensureEnder() : b.store;
+      if (st) { const k = tk.dataset.take, n = st[k] || 0; if (n) { S.inv[k] += n; delete st[k]; S.selType = k; toast(`Took ${n} ${INAME[k]}`); } }
+    }
     if (e.target.closest('#putBtn')) {
       const k = S.selType;
       if (b.type === 'assembler') {
@@ -2930,7 +3024,7 @@ function bindInput() {
           if (bufCount(b, slot) >= bufCap(r, slot)) toast(`${recipeNeedLabel(slot)} buffer full`);
           else { b.buf[k] = (b.buf[k] || 0) + 1; S.inv[k]--; toast(`+1 ${INAME[k]} into Assembler`); }
         }
-      } else if (b.store) { let n = 0; while (S.inv[k] > 0 && chestAdd(b, k)) { S.inv[k]--; n++; } if (n) toast(`Stored ${n} ${INAME[k]}`); }
+      } else if (b.store || isSharedChest(b)) { let n = 0; while (S.inv[k] > 0 && chestAdd(b, k)) { S.inv[k]--; n++; } if (n) toast(`Stored ${n} ${INAME[k]}`); }
     }
     const rk = e.target.closest('[data-recipe]');
     if (rk && b.type === 'assembler') { b.pick = rk.dataset.recipe; b.timer = 0; toast('Recipe: ' + RECIPES[b.pick].desc); }
@@ -3038,7 +3132,7 @@ function init() {
   if (loadedFromSave) setTimeout(() => toast('💾 Welcome back! Your progress was loaded.'), 400);
   else if (!DEMO) setTimeout(() => toast('Welcome! Chop trees and dig dirt to build a Drill.'), 400);
   // test hooks
-  window.PF = { get S() { return S; }, DEF, RECIPES, TIERS, PLANETS, unlocked, hasTier, shipKind, shipStats, hot, cold, goalsList, goalsMap, GRADE, HOLD_MS, LAB_IN, LAB_PARTS, labPorts, ALT_FOR, LEGACY_COST, SMELT, slotOf, bufCount, bufHas, bufTake, recipeNeedLabel, invCount, canAfford, pay, planCost, altTypes, refundOf, deliver, assemblerPorts, AIR_BUILD, bushAt, debrisAt, paintMat, ensureMatIcons, MAT_URL, ITEMS, ICOL, INAME, removeAt, deletableAt, get hold() { return hold; }, get placeFlip() { return placeFlip; }, set placeFlip(v) { placeFlip = v === -1 ? -1 : 1; updateFlipBtn(); }, facing, flipP, outOf, inOf, nodeOf, togglePlaceFlip, step: n => { for (let i = 0; i < n; i++) step(1 / 60); }, primaryAt: (wx, wy) => { const [sx, sy] = worldToScreen(wx, wy); mouse.x = sx; mouse.y = sy; primary(); }, setMode, render, toast, save, load,
+  window.PF = { get S() { return S; }, DEF, RECIPES, TIERS, PLANETS, unlocked, hasTier, shipKind, shipStats, hot, cold, goalsList, goalsMap, GRADE, HOLD_MS, LAB_IN, LAB_PARTS, labPorts, ALT_FOR, LEGACY_COST, SMELT, slotOf, bufCount, bufHas, bufTake, recipeNeedLabel, invCount, canAfford, pay, planCost, altTypes, refundOf, deliver, assemblerPorts, AIR_BUILD, bushAt, debrisAt, paintMat, ensureMatIcons, MAT_URL, ITEMS, ICOL, INAME, removeAt, deletableAt, ENDER_CAP, CHEST_CAP, ensureEnder, isSharedChest, normalizeEnder, get hold() { return hold; }, get placeFlip() { return placeFlip; }, set placeFlip(v) { placeFlip = v === -1 ? -1 : 1; updateFlipBtn(); }, facing, flipP, outOf, inOf, nodeOf, togglePlaceFlip, step: n => { for (let i = 0; i < n; i++) step(1 / 60); }, stepDt: dt => step(Math.max(0, +dt || 0)), primaryAt: (wx, wy) => { const [sx, sy] = worldToScreen(wx, wy); mouse.x = sx; mouse.y = sy; primary(); }, setMode, render, toast, save, load,
     api: { belt: (x1, y1, x2, y2) => { setMode({ kind: 'conveyor' }); conveyorClick(x1, y1); conveyorClick(x2, y2); setMode(null); }, catwalk: (x1, y1, x2, y2) => { setMode({ kind: 'catwalk' }); catwalkClick(x1, y1); catwalkClick(x2, y2); setMode(null); }, belt2: (x1, y1, x2, y2) => { setMode({ kind: 'conveyor2' }); conveyorClick(x1, y1); conveyorClick(x2, y2); setMode(null); }, setResearch: (n, v=true) => { S.research[n] = !!v; uiDirty = true; }, linkClick: (a, b) => { setMode({ kind: 'link' }); linkClick(...bWorld(a, nodeOf(a))); linkClick(...bWorld(b, nodeOf(b))); setMode(null); }, switchPlanet, openBox, closeBox, chestAdd, chestTotal, isWarm, die, tryPlace: (t, wx, wy) => { setMode({ kind: 'build', type: t }); tryPlace(wx, wy); }, placeBuilding, dockShip, tryBoard, tryLand, toggleInv, toggleBuild, keys, touch, bWorld, NODE, mouse, worldToScreen, cam, goal, setUiDirty: () => { uiDirty = true; } } };
   requestAnimationFrame(t => { last = t; requestAnimationFrame(loop); });
 }

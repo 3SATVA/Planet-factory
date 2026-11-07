@@ -20,11 +20,12 @@ Checks:
 node --check game.js
 python3 scripts/test-save-heights.py      # needs the server on port 8799
 python3 scripts/test-recipe-balance.py    # same server
+python3 scripts/test-teleport-remote.py   # same server
 ```
 
 ## Planets
 
-Each planet keeps its own terrain, buildings, and belts. Research, inventory, and goals travel with you. Machines on planets you are not standing on are paused.
+Each planet keeps its own terrain, buildings, and belts. Research, inventory, goals, and the Teleport Chest vault travel with you. Factories on planets you have already visited keep running while you are on another planet or in flight. They use the same power, belts, buffers, and timers as the planet you are standing on. Goops on a planet you are not watching pause and do not spawn, so they cannot pile up or hand you loot. Closing the page does not produce while it is shut. Only visited planets are simulated.
 
 | Planet | Renewable by hand | Renewable from a Drill | Smelt |
 |---|---|---|---|
@@ -65,7 +66,7 @@ Global, not per planet. Parts are fed into any Research Lab port.
 
 | Level | Cost | Unlocks |
 |---|---|---|
-| 1 Mechanics | 16 Gears | Sorter, Unloader |
+| 1 Mechanics | 16 Gears | Sorter, Unloader, Teleport Chest |
 | 2 Electronics | 12 Circuits | Advanced Drill, Advanced Generator |
 | 3 Logistics | 8 Circuits + 8 Frames | Fast Conveyor, Splitter, Merger |
 | 4 Corvette | 15 Circuits + 15 Gears + 15 Frames | Corvette Port |
@@ -95,11 +96,12 @@ The Furnace accepts Stone, Cobalt Ore, and Red Dust Ore only. It does not accept
 | Furnace | 5 Stone, 2 Dirt* | Stone from a Drill (or a Red Dust dig). |
 | Assembler | 6 Iron, 4 Stone | Iron chain on every planet. |
 | Research Lab | 8 Iron, 6 Stone | Same. |
-| Chest | 6 Wood, 2 Stone | Same. Holds 60. |
+| Chest | 6 Wood, 2 Stone | Same. Holds 60, this chest only. |
+| Teleport Chest | 4 Iron, 2 Gears, 2 Stone | Level 1. No power. One shared vault of 120 on every planet. |
 | Lamp / Cooler | 2 Iron, 2 Wood | Warmth or cooling. No power. |
 | Turret | 4 Iron, 2 Stone | Uses 2 power. |
 | Sorter | 3 Iron, 1 Gear | Level 1. Local iron gear, not a crystal. |
-| Unloader | 2 Iron, 2 Gears | Level 1. Sits next to a Chest. |
+| Unloader | 2 Iron, 2 Gears | Level 1. Sits next to a Chest or Teleport Chest. |
 | Fast Conveyor | 1 Iron, 1 Gear | Level 3. 2× belt speed. |
 | Splitter / Merger | 4 Iron, 2 Gears | Level 3. |
 | Basic Ship Port | 12 Iron, 10 Stone, 6 Wood, 5 Jelly | Gunship. Jelly comes from goop on every planet. |
@@ -108,6 +110,12 @@ The Furnace accepts Stone, Cobalt Ore, and Red Dust Ore only. It does not accept
 | Corvette Port | 12 Cobalt*, 12 Frames, 10 Circuits, 20 Iron, 8 Jelly | Level 4. Enters Red Dust's atmosphere. |
 
 `*` means the substitute column above. Power lines and power nodes have no material cost.
+
+## Teleport Chest and planets you leave
+
+Research Level 1. The Teleport Chest costs 4 Iron, 2 Gears, and 2 Stone, all local once a planet can smelt iron. It does not use power. Every Teleport Chest opens the same vault of 120 items. An ordinary Chest is still private and holds 60. Hands, belts, and Unloaders all use that one vault. Removing or rebuilding a Teleport Chest refunds only the building you paid for. The vault is saved once on the player, not copied into each world, and old saves load with an empty vault without moving buildings.
+
+While this page is open, every planet you have already visited keeps its factory running on the same timestep as the planet you are standing on. Drills, furnaces, assemblers, labs, belts, and both kinds of chest use their real rates, power, and buffers. A full vault or a furnace queue blocks the belt instead of deleting items. The planet under your feet resolves a shared pull first; other visited planets follow in id order. Goops on a planet you are not watching pause and do not spawn. A planet you have never visited is not simulated. Closing the page does not add offline progress.
 
 ## What stays an import
 
